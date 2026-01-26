@@ -47,13 +47,56 @@ async function run() {
             res.send(client);
         });
 
-        // bakir list add kora
+        // baki name list add kora function
         app.post('/clients', async (req, res) => {
             console.log('data in the server', req.body);
             const newClient = req.body;
             const result = await clientsCollection.insertOne(newClient);
             res.send(result)
         })
+
+        // Bakir name list update kora function
+        app.put('/clients/:id', async (req, res) => {
+            try {
+                const id = req.params.id;
+                const updatedClient = req.body;
+
+                const updateDoc = {
+                    $set: {
+                        name: updatedClient.name,
+                        location: updatedClient.location,
+                        number: updatedClient.number,
+                    },
+                };
+
+                const result = await clientsCollection.updateOne(
+                    { _id: new ObjectId(id) },
+                    updateDoc
+                );
+
+                res.send(result);
+            } catch (error) {
+                console.error(error);
+                res.status(500).send({ message: "Client update failed" });
+            }
+        });
+
+        // bakir name list delete kora
+        app.delete('/clients/:id', async (req, res) => {
+            try {
+                const id = req.params.id;
+
+                const result = await clientsCollection.deleteOne({
+                    _id: new ObjectId(id)
+                });
+
+                res.send(result);
+            } catch (error) {
+                console.error(error);
+                res.status(500).send({ message: "Client delete failed" });
+            }
+        });
+
 
         // bakir statement add kora
         app.post('/clients/:id/transactions', async (req, res) => {
