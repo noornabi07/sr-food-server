@@ -28,10 +28,18 @@ async function run() {
         await client.connect();
 
         const clientsCollection = client.db('clientsdb').collection('clients');
+        const productsCollection = client.db('productsdb').collection('products');
 
         // bakir list read kora
         app.get('/clients', async (req, res) => {
             const cursor = clientsCollection.find();
+            const result = await cursor.toArray();
+            res.send(result);
+        })
+
+        // products list read kora
+        app.get('/products', async(req, res) =>{
+            const cursor = productsCollection.find();
             const result = await cursor.toArray();
             res.send(result);
         })
@@ -47,12 +55,30 @@ async function run() {
             res.send(client);
         });
 
+        // product statement read kora
+        app.get('/products/:id', async(req, res) =>{
+            const id = req.params.id;
+
+            const product = await productsCollection.findOne({
+                _id: new ObjectId(id)
+            })
+            res.send(product)
+        })
+
         // baki name list add kora function
         app.post('/clients', async (req, res) => {
             console.log('data in the server', req.body);
             const newClient = req.body;
             const result = await clientsCollection.insertOne(newClient);
             res.send(result)
+        })
+
+        // product name list add kora function
+        app.post('/products', async(req, res) =>{
+            console.log('data product in the server', req.body);
+            const newProducts = req.body;
+            const result = await productsCollection.insertOne(newProducts);
+            res.send(result);
         })
 
         // Bakir name list update kora function
