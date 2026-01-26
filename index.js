@@ -38,7 +38,7 @@ async function run() {
         })
 
         // products list read kora
-        app.get('/products', async(req, res) =>{
+        app.get('/products', async (req, res) => {
             const cursor = productsCollection.find();
             const result = await cursor.toArray();
             res.send(result);
@@ -56,7 +56,7 @@ async function run() {
         });
 
         // product statement read kora
-        app.get('/products/:id', async(req, res) =>{
+        app.get('/products/:id', async (req, res) => {
             const id = req.params.id;
 
             const product = await productsCollection.findOne({
@@ -74,7 +74,7 @@ async function run() {
         })
 
         // product name list add kora function
-        app.post('/products', async(req, res) =>{
+        app.post('/products', async (req, res) => {
             console.log('data product in the server', req.body);
             const newProducts = req.body;
             const result = await productsCollection.insertOne(newProducts);
@@ -142,8 +142,24 @@ async function run() {
             }
         });
 
-        // baki statement update korar
+        // Maler statement add kora
+        app.post('/products/:id/transactions', async (req, res) => {
+            try {
+                const productId = req.params.id;
+                const transaction = req.body;
 
+                const result = await productsCollection.updateOne(
+                    { _id: new ObjectId(productId) },
+                    { $push: { transactions: transaction } }
+                );
+                res.send(result);
+            } catch (error) {
+                console.error(error);
+                res.status(500).send({ message: "Transaction add failed" })
+            }
+        })
+
+        // baki statement update korar
         // PUT /clients/:id/transactions/:transactionId
         app.put('/clients/:id/transactions/:transactionId', async (req, res) => {
             try {
@@ -156,6 +172,24 @@ async function run() {
                     { $set: { "transactions.$": updatedTransaction } }
                 );
 
+                res.send(result);
+            } catch (error) {
+                console.error(error);
+                res.status(500).send({ message: "Transaction update failed" });
+            }
+        });
+
+        // Maler statement update korar function
+        app.put('/products/:id/transactions/:transactionId', async (req, res) => {
+            try {
+                const productId = req.params.id;
+                const transactionId = req.params.transactionId;
+                const updatedTransaction = req.body;
+
+                const result = await productsCollection.updateOne(
+                    {_id: new ObjectId(productId), "transaction._id": transactionId},
+                    {$set: {"transactions.$": updatedTransaction}}
+                );
                 res.send(result);
             } catch (error) {
                 console.error(error);
