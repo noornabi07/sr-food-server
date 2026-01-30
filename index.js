@@ -107,7 +107,35 @@ async function run() {
             }
         });
 
-        // bakir name list delete kora
+        // Product name list update kora function
+        app.put('/products/:id', async (req, res) => {
+            try {
+                const id = req.params.id;
+
+                if (!ObjectId.isValid(id)) {
+                    return res.status(400).send({ message: "Invalid product id" });
+                }
+
+                const { name, pricePerKg } = req.body;
+
+                const result = await productsCollection.updateOne(
+                    { _id: new ObjectId(id) },
+                    {
+                        $set: {
+                            name,
+                            pricePerKg,
+                        },
+                    }
+                );
+
+                res.send({ success: true, result });
+            } catch (error) {
+                console.error(error);
+                res.status(500).send({ message: "Product update failed" });
+            }
+        });
+
+        // bakir name list delete kora function
         app.delete('/clients/:id', async (req, res) => {
             try {
                 const id = req.params.id;
@@ -123,6 +151,21 @@ async function run() {
             }
         });
 
+        // Product name list delete kora function
+        app.delete('/products/:id', async (req, res) => {
+            try {
+                const id = req.params.id;
+
+                const result = await productsCollection.deleteOne({
+                    _id: new ObjectId(id)
+                });
+
+                res.send(result);
+            } catch (error) {
+                console.error(error);
+                res.status(500).send({ message: "Client delete failed" });
+            }
+        });
 
         // bakir statement add kora
         app.post('/clients/:id/transactions', async (req, res) => {
@@ -187,9 +230,17 @@ async function run() {
                 const updatedTransaction = req.body;
 
                 const result = await productsCollection.updateOne(
-                    {_id: new ObjectId(productId), "transaction._id": transactionId},
-                    {$set: {"transactions.$": updatedTransaction}}
+                    {
+                        _id: new ObjectId(productId),
+                        "transactions._id": transactionId
+                    },
+                    {
+                        $set: {
+                            "transactions.$": updatedTransaction
+                        }
+                    }
                 );
+
                 res.send(result);
             } catch (error) {
                 console.error(error);
@@ -204,6 +255,24 @@ async function run() {
                 const transactionId = req.params.transactionId; // UUID string (jodi frontend e UUID use kora hoy)
 
                 const result = await clientsCollection.updateOne(
+                    { _id: new ObjectId(clientId) },
+                    { $pull: { transactions: { _id: transactionId } } } // match specific transaction
+                );
+
+                res.send(result);
+            } catch (error) {
+                console.error(error);
+                res.status(500).send({ message: "Transaction delete failed" });
+            }
+        });
+
+        // DELETE for product transaction
+         app.delete('/products/:id/transactions/:transactionId', async (req, res) => {
+            try {
+                const clientId = req.params.id;           // Client ObjectId
+                const transactionId = req.params.transactionId; // UUID string (jodi frontend e UUID use kora hoy)
+
+                const result = await productsCollection.updateOne(
                     { _id: new ObjectId(clientId) },
                     { $pull: { transactions: { _id: transactionId } } } // match specific transaction
                 );
