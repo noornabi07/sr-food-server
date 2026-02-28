@@ -30,6 +30,7 @@ async function run() {
         const clientsCollection = client.db('clientsdb').collection('clients');
         const productsCollection = client.db('productsdb').collection('products');
         const partysCollection = client.db('partysdb').collection('partys');
+        const dokanTransactionsCollection = client.db('dokantransactiondb').collection('dokantransaction');
 
         // bakir list read kora
         app.get('/clients', async (req, res) => {
@@ -52,6 +53,65 @@ async function run() {
             res.send(result);
         })
 
+        // Dokan transaction read kora function
+        app.get('/dokantransactions', async (req, res) => {
+            try {
+                const result = await dokanTransactionsCollection.find().toArray();
+
+                res.status(200).json(result);
+
+            } catch (error) {
+
+                console.error("Fetch Error:", error);
+
+                res.status(500).json({
+                    message: "ডাটা লোড করা যায়নি",
+                    error: error.message
+                });
+            }
+        });
+
+        // Dokan transaction add korar function
+        app.post('/dokantransactions', async (req, res) => {
+            try {
+
+                const newTransaction = req.body;
+
+                // Basic Validation
+                if (
+                    !newTransaction.date ||
+                    !newTransaction.motKroy === undefined ||
+                    !newTransaction.cashJoma === undefined
+                ) {
+                    return res.status(400).json({
+                        message: "সব তথ্য পাঠানো হয়নি"
+                    });
+                }
+
+                // Auto Pawna Calculate (Safety)
+                newTransaction.pawna =
+                    Number(newTransaction.motKroy) - Number(newTransaction.cashJoma);
+
+                // Insert into MongoDB
+                const result = await dokanTransactionsCollection.insertOne(newTransaction);
+
+                res.status(201).json({
+                    message: "লেনদেন যোগ হয়েছে",
+                    insertedId: result.insertedId,
+                    data: newTransaction
+                });
+
+            } catch (error) {
+
+                console.error("Add Error:", error);
+
+                res.status(500).json({
+                    message: "ডাটা যোগ করা যায়নি",
+                    error: error.message
+                });
+            }
+        });
+
         // bakir statement read kora
         app.get('/clients/:id', async (req, res) => {
             const id = req.params.id;
@@ -64,7 +124,7 @@ async function run() {
         });
 
         // Party statement read korar function
-        app.get('/partys/:id', async(req, res) =>{
+        app.get('/partys/:id', async (req, res) => {
             const id = req.params.id;
 
             const party = await partysCollection.findOne({
@@ -188,6 +248,64 @@ async function run() {
             }
         });
 
+        // Dokan transaction update korar function
+        app.put('/dokantransactions/:id', async (req, res) => {
+            try {
+
+                const id = req.params.id;
+                const updatedData = req.body;
+
+                // Validation
+                if (
+                    !updatedData.date ||
+                    updatedData.motKroy === undefined ||
+                    updatedData.cashJoma === undefined
+                ) {
+                    return res.status(400).json({
+                        message: "সব তথ্য দেওয়া হয়নি"
+                    });
+                }
+
+                // Auto Pawna Recalculate
+                const pawna =
+                    Number(updatedData.motKroy) - Number(updatedData.cashJoma);
+
+                // MongoDB Update
+                const result = await dokanTransactionsCollection.updateOne(
+                    { _id: new ObjectId(id) },
+                    {
+                        $set: {
+                            date: updatedData.date,
+                            motKroy: Number(updatedData.motKroy),
+                            cashJoma: Number(updatedData.cashJoma),
+                            pawna: pawna
+                        }
+                    }
+                );
+
+                // If not found
+                if (result.matchedCount === 0) {
+                    return res.status(404).json({
+                        message: "ডাটা পাওয়া যায়নি"
+                    });
+                }
+
+                res.status(200).json({
+                    message: "আপডেট সফল ✅",
+                    id: id
+                });
+
+            } catch (error) {
+
+                console.error("Update Error:", error);
+
+                res.status(500).json({
+                    message: "আপডেট করা যায়নি",
+                    error: error.message
+                });
+            }
+        });
+
         // bakir name list delete kora function
         app.delete('/clients/:id', async (req, res) => {
             try {
@@ -205,7 +323,7 @@ async function run() {
         });
 
         // Party name list delete kora function
-         app.delete('/partys/:id', async (req, res) => {
+        app.delete('/partys/:id', async (req, res) => {
             try {
                 const id = req.params.id;
 
@@ -233,6 +351,39 @@ async function run() {
             } catch (error) {
                 console.error(error);
                 res.status(500).send({ message: "Client delete failed" });
+            }
+        });
+
+        // Dokan transaction delete korar function
+        app.delete('/dokantransactions/:id', async (req, res) => {
+            try {
+
+                const id = req.params.id;
+
+                const result = await dokanTransactionsCollection.deleteOne({
+                    _id: new ObjectId(id)
+                });
+
+                // If not found
+                if (result.deletedCount === 0) {
+                    return res.status(404).json({
+                        message: "ডাটা পাওয়া যায়নি"
+                    });
+                }
+
+                res.status(200).json({
+                    message: "ডিলিট সফল হয়েছে 🗑️",
+                    id: id
+                });
+
+            } catch (error) {
+
+                console.error("Delete Error:", error);
+
+                res.status(500).json({
+                    message: "ডিলিট করা যায়নি",
+                    error: error.message
+                });
             }
         });
 
@@ -408,7 +559,6 @@ async function run() {
                 res.status(500).send({ message: "Transaction delete failed" });
             }
         });
-
 
 
         await client.db("admin").command({ ping: 1 });
