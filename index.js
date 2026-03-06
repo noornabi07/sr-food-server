@@ -31,6 +31,7 @@ async function run() {
         const productsCollection = client.db('productsdb').collection('products');
         const partysCollection = client.db('partysdb').collection('partys');
         const dokanTransactionsCollection = client.db('dokantransactiondb').collection('dokantransaction');
+        const dailyTransactionsCollection = client.db('dailytransactiondb').collection('dailytransaction');
 
         // bakir list read kora
         app.get('/clients', async (req, res) => {
@@ -68,6 +69,29 @@ async function run() {
                     message: "ডাটা লোড করা যায়নি",
                     error: error.message
                 });
+            }
+        });
+
+        // Daily transaction read kora function
+        app.get("/dailytransactions", async (req, res) => {
+            try {
+
+                const result = await dailyTransactionsCollection
+                    .find({})
+                    .sort({ date: -1 })   // newest first
+                    .toArray();
+
+                res.status(200).json(result);
+
+            } catch (error) {
+
+                console.error("Fetch Error:", error);
+
+                res.status(500).json({
+                    message: "ডাটা লোড করা যায়নি",
+                    error: error.message
+                });
+
             }
         });
 
@@ -110,6 +134,49 @@ async function run() {
                     error: error.message
                 });
             }
+        });
+
+        // Daily transaction add korar function
+        app.post('/dailytransactions', async (req, res) => {
+
+            try {
+
+                const data = req.body;
+
+                // Basic validation
+                if (!data.date) {
+                    return res.status(400).json({
+                        message: "তারিখ দেওয়া বাধ্যতামূলক"
+                    });
+                }
+
+                const transaction = {
+                    date: data.date,
+                    bikri: Number(data.bikri) || 0,
+                    uttholon: Number(data.uttholon) || 0,
+                    baki: Number(data.baki) || 0,
+                    bitoron: Number(data.bitoron) || 0,
+                    createdAt: new Date()
+                };
+
+                const result = await dailyTransactionsCollection.insertOne(transaction);
+
+                res.status(201).json({
+                    message: "Transaction successfully added",
+                    insertedId: result.insertedId
+                });
+
+            } catch (error) {
+
+                console.error("Insert Error:", error);
+
+                res.status(500).json({
+                    message: "Transaction add করা যায়নি",
+                    error: error.message
+                });
+
+            }
+
         });
 
         // bakir statement read kora
@@ -306,6 +373,48 @@ async function run() {
             }
         });
 
+        // Daily transaction update korar function
+
+        app.put('/dailytransactions/:id', async (req, res) => {
+
+            try {
+
+                const id = req.params.id;
+                const data = req.body;
+
+                const query = { _id: new ObjectId(id) };
+
+                const updateDoc = {
+                    $set: {
+                        date: data.date,
+                        bikri: Number(data.bikri) || 0,
+                        uttholon: Number(data.uttholon) || 0,
+                        baki: Number(data.baki) || 0,
+                        bitoron: Number(data.bitoron) || 0,
+                        updatedAt: new Date()
+                    }
+                };
+
+                const result = await dailyTransactionsCollection.updateOne(query, updateDoc);
+
+                res.status(200).json({
+                    message: "Transaction updated successfully",
+                    result
+                });
+
+            } catch (error) {
+
+                console.error("Update Error:", error);
+
+                res.status(500).json({
+                    message: "Transaction update করা যায়নি",
+                    error: error.message
+                });
+
+            }
+
+        });
+
         // bakir name list delete kora function
         app.delete('/clients/:id', async (req, res) => {
             try {
@@ -385,6 +494,41 @@ async function run() {
                     error: error.message
                 });
             }
+        });
+
+        // Daily transaction delete korar function den
+        app.delete('/dailytransactions/:id', async (req, res) => {
+
+            try {
+
+                const id = req.params.id;
+
+                const query = { _id: new ObjectId(id) };
+
+                const result = await dailyTransactionsCollection.deleteOne(query);
+
+                if (result.deletedCount === 0) {
+                    return res.status(404).json({
+                        message: "Transaction পাওয়া যায়নি"
+                    });
+                }
+
+                res.status(200).json({
+                    message: "Transaction successfully deleted",
+                    result
+                });
+
+            } catch (error) {
+
+                console.error("Delete Error:", error);
+
+                res.status(500).json({
+                    message: "Transaction delete করা যায়নি",
+                    error: error.message
+                });
+
+            }
+
         });
 
         // Bakir statement add kora
