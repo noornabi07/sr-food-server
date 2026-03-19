@@ -105,7 +105,8 @@ async function run() {
                 if (
                     !newTransaction.date ||
                     !newTransaction.motKroy === undefined ||
-                    !newTransaction.cashJoma === undefined
+                    !newTransaction.cashJoma === undefined ||
+                    !newTransaction.description === undefined
                 ) {
                     return res.status(400).json({
                         message: "সব তথ্য পাঠানো হয়নি"
@@ -156,6 +157,8 @@ async function run() {
                     uttholon: Number(data.uttholon) || 0,
                     baki: Number(data.baki) || 0,
                     bitoron: Number(data.bitoron) || 0,
+                    bitoronDes: data.bitoronDes || "",
+                    khoroch: Number(data.khoroch) || 0,
                     createdAt: new Date()
                 };
 
@@ -326,7 +329,8 @@ async function run() {
                 if (
                     !updatedData.date ||
                     updatedData.motKroy === undefined ||
-                    updatedData.cashJoma === undefined
+                    updatedData.cashJoma === undefined ||
+                    updatedData.description === undefined
                 ) {
                     return res.status(400).json({
                         message: "সব তথ্য দেওয়া হয়নি"
@@ -391,6 +395,8 @@ async function run() {
                         uttholon: Number(data.uttholon) || 0,
                         baki: Number(data.baki) || 0,
                         bitoron: Number(data.bitoron) || 0,
+                        bitoronDes: data.bitoronDes || "",
+                        khoroch: Number(data.khoroch) || 0,
                         updatedAt: new Date()
                     }
                 };
