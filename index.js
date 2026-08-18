@@ -14,6 +14,8 @@ app.use(express.json());
 
 const uri = "mongodb+srv://srkhaddoDB:vzVY4ZkZjfe72YPn@cluster0.vefjkrb.mongodb.net/?appName=Cluster0";
 
+// const uri = "mongodb+srv://srkhaddoDB:<db_password>@cluster0.vefjkrb.mongodb.net/?appName=Cluster0";
+
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
     serverApi: {
@@ -349,6 +351,7 @@ async function run() {
                             date: updatedData.date,
                             motKroy: Number(updatedData.motKroy),
                             cashJoma: Number(updatedData.cashJoma),
+                            description: updatedData.description,
                             pawna: pawna
                         }
                     }
