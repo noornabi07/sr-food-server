@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const express = require('express');
 const { MongoClient, ServerApiVersion } = require('mongodb');
 const cors = require('cors');
@@ -9,12 +11,10 @@ const port = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
-// user: srkhaddoDB
-// Password: vzVY4ZkZjfe72YPn
+const username = process.env.DB_USERNAME;
+const password = process.env.DB_PASSWORD;
 
-const uri = "mongodb+srv://srkhaddoDB:vzVY4ZkZjfe72YPn@cluster0.vefjkrb.mongodb.net/?appName=Cluster0";
-
-// const uri = "mongodb+srv://srkhaddoDB:<db_password>@cluster0.vefjkrb.mongodb.net/?appName=Cluster0";
+const uri = `mongodb+srv://${username}:${password}@cluster0.vefjkrb.mongodb.net/?appName=Cluster0`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
@@ -34,6 +34,8 @@ async function run() {
         const partysCollection = client.db('partysdb').collection('partys');
         const dokanTransactionsCollection = client.db('dokantransactiondb').collection('dokantransaction');
         const dailyTransactionsCollection = client.db('dailytransactiondb').collection('dailytransaction');
+        const homeproductsCollection = client.db('homeproducts').collection('fixedproducts');
+
 
         // bakir list read kora
         app.get('/clients', async (req, res) => {
@@ -95,6 +97,13 @@ async function run() {
                 });
 
             }
+        });
+
+        // home products read kora function
+        app.get('/homeproducts', async (req, res) => {
+            const cursor = homeproductsCollection.find();
+            const result = await cursor.toArray();
+            res.send(result);
         });
 
         // Dokan transaction add korar function
@@ -713,8 +722,8 @@ async function run() {
             }
         });
 
-        await client.db("admin").command({ ping: 1 });
-        console.log("Pinged your deployment. You successfully connected to MongoDB!");
+        // await client.db("admin").command({ ping: 1 });
+        // console.log("Pinged your deployment. You successfully connected to MongoDB!");
     } finally {
     }
 }
