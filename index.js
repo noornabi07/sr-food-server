@@ -7,9 +7,33 @@ const { ObjectId } = require("mongodb");
 const app = express();
 const port = process.env.PORT || 3000;
 
-// middleware
-app.use(cors());
+// middleware — allow frontend domain(s); avoids CORS when API is reachable
+const allowedOrigins = (
+  process.env.CORS_ORIGINS ||
+  "https://sr-tradelink.com,https://www.sr-tradelink.com,http://localhost:5173"
+)
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+app.use(
+  cors({
+    origin(origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+        return;
+      }
+      callback(new Error(`CORS blocked for origin: ${origin}`));
+    },
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
 app.use(express.json());
+
+app.get("/health", (req, res) => {
+  res.json({ status: "ok", service: "sr-khaddo-api" });
+});
 
 const uri = process.env.MONGODB_URI || `mongodb+srv://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@cluster0.vefjkrb.mongodb.net/?appName=Cluster0`;
 
@@ -702,12 +726,15 @@ async function run() {
   } finally {
   }
 }
-run().catch(console.dir);
+run().catch((error) => {
+  console.error("Failed to start API (MongoDB connection):", error.message);
+  process.exit(1);
+});
 
 app.get("/", (req, res) => {
   res.send("simple sr khaddo running..");
 });
 
-app.listen(port, () => {
+app.listen(port, "0.0.0.0", () => {
   console.log(`sr khaddo vander running port ${port}`);
 });
