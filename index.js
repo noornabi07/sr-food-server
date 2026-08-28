@@ -18,17 +18,12 @@ const allowedOrigins = (
 
 app.use(
   cors({
-    origin(origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-        return;
-      }
-      callback(new Error(`CORS blocked for origin: ${origin}`));
-    },
+    origin: allowedOrigins,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
+app.options(/.*/, cors({ origin: allowedOrigins }));
 app.use(express.json());
 
 app.get("/health", (req, res) => {
@@ -726,10 +721,17 @@ async function run() {
   } finally {
   }
 }
-run().catch((error) => {
-  console.error("Failed to start API (MongoDB connection):", error.message);
-  process.exit(1);
-});
+async function start() {
+  try {
+    await run();
+    console.log("MongoDB connected — API routes are active");
+  } catch (error) {
+    console.error("MongoDB connection failed:", error.message);
+    console.error("Server stays online at /health — fix .env and restart PM2");
+  }
+}
+
+start();
 
 app.get("/", (req, res) => {
   res.send("simple sr khaddo running..");
