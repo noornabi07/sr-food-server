@@ -10,27 +10,29 @@ const port = process.env.PORT || 3000;
 // middleware — allow frontend domain(s); avoids CORS when API is reachable
 const allowedOrigins = (
   process.env.CORS_ORIGINS ||
-  "https://sr-tradelink.com,https://www.sr-tradelink.com,http://localhost:5173"
+  "https://sr-tradelink.com,https://www.sr-tradelink.com,http://localhost:5173,https://sr-tradelink.com/,https://www.sr-tradelink.com/,http://localhost:5173/"
 )
   .split(",")
-  .map((origin) => origin.trim())
+  .map(origin => origin.trim())
   .filter(Boolean);
 
 app.use(
   cors({
-    origin: allowedOrigins,
+    origin: "*",
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
-  })
+  }),
 );
-app.options(/.*/, cors({ origin: allowedOrigins }));
+app.options(/.*/, cors({ origin: "*" }));
 app.use(express.json());
 
 app.get("/health", (req, res) => {
   res.json({ status: "ok", service: "sr-khaddo-api" });
 });
 
-const uri = process.env.MONGODB_URI || `mongodb+srv://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@cluster0.vefjkrb.mongodb.net/?appName=Cluster0`;
+const uri =
+  process.env.MONGODB_URI ||
+  `mongodb+srv://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@cluster0.vefjkrb.mongodb.net/?appName=Cluster0`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
